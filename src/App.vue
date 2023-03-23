@@ -1,121 +1,109 @@
+<script>
+  import todos from './data/todos';
+  import StatusFilter from './components/StatusFilter.vue'
+  import TodoItem from './components/TodoItem.vue';
+
+  export default {
+    components: {
+    StatusFilter,
+    TodoItem
+},
+    data() {
+      let todos = [];
+      const jsonData = localStorage.getItem('todos') || '[]';
+
+      try {
+        todos = JSON.parse(jsonData);
+      } catch (error) {}
+
+      return {
+        todos,
+        title: '',
+        status: 'all',
+      }
+    },
+    computed: {
+      activeTodos() {
+        return this.todos.filter(todo => !todo.completed);
+      },
+      nonActiveTodos() {
+        return this.todos.filter(todo => todo.completed);
+      },
+    },
+    watch: {
+      todos: {
+        deep: true,
+        handler() {
+          localStorage.setItem('todos', JSON.stringify(this.todos));
+        }
+      }
+    },
+    methods: {
+      handleSubmit() {
+        this.todos.push({
+          id: Date.now(),
+          title: this.title,
+          completed: false,
+        });
+
+        this.title='';
+      }
+    }
+  }
+</script>
+
 <template>
   <div class="todoapp">
     <h1 class="todoapp__title">todos</h1>
 
     <div class="todoapp__content">
       <header class="todoapp__header">
-        <button type="button" class="todoapp__toggle-all active" />
+        <button 
+          type="button" 
+          :class="{ active: activeTodos.length === 0 }"
+          class="todoapp__toggle-all"           
+        />
 
-        <form>
+        <form @submit.prevent="handleSubmit">
           <input
             type="text"
             class="todoapp__new-todo"
             placeholder="What needs to be done?"
+            v-model="title"
           />
         </form>
       </header>
 
       <section class="todoapp__main">
-        <div class="todo completed">
-          <label class="todo__status-label">
-            <input
-              type="checkbox"
-              class="todo__status"
-              checked
-            />
-          </label>
-
-          <span class="todo__title">Completed Todo</span>
-
-          <button type="button" class="todo__remove">×</button>
-
-          <div class="modal overlay">
-            <div class="modal-background has-background-white-ter" />
-            <div class="loader" />
-          </div>
-        </div>
-
-        <div class="todo">
-          <label class="todo__status-label">
-            <input
-              type="checkbox"
-              class="todo__status"
-            />
-          </label>
-
-          <span class="todo__title">Not Completed Todo</span>
-          <button type="button" class="todo__remove">×</button>
-
-          <div class="modal overlay">
-            <div class="modal-background has-background-white-ter" />
-            <div class="loader" />
-          </div>
-        </div>
-
-        <div class="todo">
-          <label class="todo__status-label">
-            <input
-              type="checkbox"
-              class="todo__status"
-            />
-          </label>
-
-          <form>
-            <input
-              type="text"
-              class="todo__title-field"
-              placeholder="Empty todo will be deleted"
-              value="Todo is being edited now"
-            />
-          </form>
-
-          <div class="modal overlay">
-            <div class="modal-background has-background-white-ter" />
-            <div class="loader" />
-          </div>
-        </div>
-
-        <div class="todo">
-          <label class="todo__status-label">
-            <input type="checkbox" class="todo__status" />
-          </label>
-
-          <span class="todo__title">Todo is being saved now</span>
-          <button type="button" class="todo__remove">×</button>
-
-          <div class="modal overlay is-active">
-            <div class="modal-background has-background-white-ter" />
-            <div class="loader" />
-          </div>
-        </div>
+        <TodoItem 
+          v-for="todo, index of todos" 
+          :key="todo.id"
+          :todo="todo"
+          @update="todos[index] = $event"
+          @delete="todos.splice(index, 1)"
+        />
       </section>
 
       <footer class="todoapp__footer">
         <span class="todo-count">
-          3 items left
+          {{ activeTodos.length }} items left
         </span>
 
-        <nav class="filter">
-          <a href="#/" class="filter__link selected">
-            All
-          </a>
+        <StatusFilter 
+          v-model="status"
+        />
 
-          <a href="#/active" class="filter__link">
-            Active
-          </a>
-
-          <a href="#/completed" class="filter__link">
-            Completed
-          </a>
-        </nav>
-
-        <button type="button" class="todoapp__clear-completed">
+        <button 
+          type="button" 
+          class="todoapp__clear-completed"
+          v-if="nonActiveTodos.length > 0"
+        >
           Clear completed
         </button>
       </footer>
     </div>
 
-    <div class="notification is-danger is-light has-text-weight-normal">
+    <!-- <div class="notification is-danger is-light has-text-weight-normal">
       <button type="button" class="delete" />
 
       Unable to add a todo
@@ -123,6 +111,9 @@
       Unable to delete a todo
       <br />
       Unable to update a todo
-    </div>
+    </div> -->
   </div>
 </template>
+
+<style>
+</style>
